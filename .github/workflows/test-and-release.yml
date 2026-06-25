@@ -1,4 +1,4 @@
-name: Test and Publish
+name: Test and Release
 
 # Run this job on all pushes and pull requests
 # as well as tags with a semantic version
@@ -18,6 +18,9 @@ concurrency:
     group: ${{ github.ref }}
     cancel-in-progress: true
 
+permissions:
+    contents: read
+
 jobs:
     # Performs quick checks before the expensive test runs
     check-and-lint:
@@ -26,19 +29,20 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: ioBroker/testing-action-check@v1
+            - uses: ioBroker/testing-action-check@v2
               with:
-                  node-version: "20.x"
+                  node-version: "24.x"
                   lint: true
                   lint-command: "npm run lint ."
 
     adapter-tests:
+        needs: [check-and-lint]
         if: contains(github.event.head_commit.message, '[skip ci]') == false
 
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
-                node-version: [18.x, 20.x, 22.x]
+                node-version: [22.x, 24.x]
                 os: [ubuntu-latest, windows-latest, macos-latest]
 
         steps:
@@ -56,15 +60,18 @@ jobs:
             startsWith(github.ref, 'refs/tags/v')
 
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            id-token: write
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
 
             - name: Use Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
-                  node-version: "20.x"
+                  node-version: "24.x"
 
             - name: Extract the version and commit body from the tag
               shell: bash
@@ -85,6 +92,10 @@ jobs:
             - name: Publish package to npm
               shell: bash
               run: |
-                  npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-                  npm whoami
+                  # npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+                  # npm whoami
+                  echo "using trusted installer ..."
+                  # ensure that newest npm is installed - otherwise trusted installer does not work
+                  npm install -g npm@latest
+                  npm -v
                   npm publish ${{ steps.extract_release.outputs.TAG }}

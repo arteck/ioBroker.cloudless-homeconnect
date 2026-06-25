@@ -1,15 +1,14 @@
 "use strict";
-
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 const utils = require("@iobroker/adapter-core");
 
-const Socket = require("./js/Socket.js");
-const Device = require("./js/Device.js");
-const ConfigService = require("./js/ConfigService.js");
-const util = require("./js/util.js");
+const Socket = require("./lib/Socket.js");
+const Device = require("./lib/Device.js");
+const ConfigService = require("./lib/ConfigService.js");
+const util = require("./lib/util.js");
 
-const events = require("events");
+const events = require("node:events");
 
 /**
  * Implementation of Homeconnect-Adapter with only local network communication.
@@ -30,7 +29,7 @@ class CloudlessHomeconnect extends utils.Adapter {
 		this.eventEmitter = new events.EventEmitter();
 
 		this.startingErrors = 0;
-		this.configJson = [];
+		this.configJson = undefined;
 		this.devMap = new Map();
 		this.configService = new ConfigService(this.eventEmitter, utils.getAbsoluteInstanceDataDir(this));
 	}
@@ -53,13 +52,19 @@ class CloudlessHomeconnect extends utils.Adapter {
 
 			this.configService.logLevel = this.log.level;
 			this.configService.config = this.config;
+			this.configService.iob = this;
 			const loadedConfig = await this.configService.loadConfig();
-			this.setState("info.config", JSON.stringify(loadedConfig), true);
+			if (loadedConfig) {
+				if (loadedConfig["waitForProfileZip"]) {
+					return;
+				}
+				this.setState("info.config", JSON.stringify(loadedConfig), true);
+			}
 
 			this.configJson = loadedConfig;
 		}
 
-		if (this.configJson.length == 0) {
+		if (!this.configJson) {
 			if (configJsonObj && util.isConfigJson(configJsonObj.val)) {
 				// @ts-ignore
 				this.configJson = JSON.parse(configJsonObj.val);
@@ -71,6 +76,10 @@ class CloudlessHomeconnect extends utils.Adapter {
 			}
 		}
 
+		await this.startWithConfig();
+	}
+
+	async startWithConfig() {
 		await this.createDatapoints();
 
 		if (this.startingErrors === 0) {
@@ -115,7 +124,7 @@ class CloudlessHomeconnect extends utils.Adapter {
 			this.log.debug("Closed connection to " + devId + "; reason: " + event);
 		});
 		this.eventEmitter.on("socketError", async (devId, e) => {
-			this.log.warn("Connection interrupted for device " + devId + ": " + e);
+			this.log.debug("Connection interrupted for device " + devId + ": " + e);
 			if (this.devMap.has(devId)) {
 				this.clearInterval(this.devMap.get(devId).refreshInterval);
 			}
@@ -153,7 +162,7 @@ class CloudlessHomeconnect extends utils.Adapter {
 
 	async createDatapoints() {
 		this.configJson.forEach(async (dev) => {
-			const id = dev.id;
+			const id = dev.id.replace(this.FORBIDDEN_CHARS, "_");
 			if (!dev.features) {
 				this.log.error("Konfiguration unvollständig");
 				this.startingErrors++;
@@ -174,11 +183,25 @@ class CloudlessHomeconnect extends utils.Adapter {
 				type: "state",
 				common: {
 					type: "boolean",
-					role: "state",
-					name: "Gerät über Adapter steuern",
+					role: "switch",
+					name: "Control the device via adapter",
 					write: true,
 					read: true,
 					def: true,
+				},
+				native: {},
+			});
+
+			//DP zum Einstellen ob Programmoptionen beim Start einzeln zum Gerät gesendet werden sollen
+			await this.setObjectNotExistsAsync(id + ".sendOptionsSeparately", {
+				type: "state",
+				common: {
+					type: "boolean",
+					role: "switch",
+					name: "Send program options seperately to device at starting a program ",
+					write: true,
+					read: true,
+					def: false,
 				},
 				native: {},
 			});
@@ -187,7 +210,7 @@ class CloudlessHomeconnect extends utils.Adapter {
 			await this.setObjectNotExistsAsync(id + ".General", {
 				type: "channel",
 				common: {
-					name: "Generelle Information zum Gerät",
+					name: "General information about the device",
 				},
 				native: {},
 			});
@@ -195,7 +218,7 @@ class CloudlessHomeconnect extends utils.Adapter {
 			await this.setObjectNotExistsAsync(id + ".General.connected", {
 				type: "state",
 				common: {
-					name: "Gibt an, ob eine Socketverbindung besteht",
+					name: "Indicates whether a socket connection exists",
 					type: "boolean",
 					role: "indicator",
 					def: false,
@@ -205,13 +228,13 @@ class CloudlessHomeconnect extends utils.Adapter {
 				native: {},
 			});
 
-			["name", "id", "enumber", "mac", "serialnumber"].forEach(async (key) => {
+			["name", "id", "mac", "serialnumber"].forEach(async (key) => {
 				await this.setObjectNotExistsAsync(id + ".General." + key, {
 					type: "state",
 					common: {
 						name: key,
 						type: "string",
-						role: "indicator",
+						role: "text",
 						write: false,
 						read: true,
 					},
@@ -226,7 +249,7 @@ class CloudlessHomeconnect extends utils.Adapter {
 					common: {
 						name: key,
 						type: "string",
-						role: "indicator",
+						role: "text",
 						write: false,
 						read: true,
 					},
@@ -241,9 +264,9 @@ class CloudlessHomeconnect extends utils.Adapter {
 				const subFolderName = this.getSubfolderByName(feature.name);
 
 				if (
-					//Nur Optionen beachten, die nur lesbar sind
-					(subFolderName.toLowerCase() === "option" && feature.access === "read") ||
-					(["program", "command", "setting", "status", "event"].includes(subFolderName.toLowerCase()) &&
+					(["option", "program", "command", "setting", "status", "event"].includes(
+						subFolderName.toLowerCase(),
+					) &&
 						//Kein Programm "SubsequentMode", weil diese für das Fortsetzen eines bereits beendeten Programms vorgesehen sind
 						!feature.name.includes("SubsequentMode")) ||
 					feature.name.endsWith("Program")
@@ -257,8 +280,12 @@ class CloudlessHomeconnect extends utils.Adapter {
 					});
 
 					if (!(await this.objectExists(this.getDpByUid(dev, uid)))) {
-						const common = this.getCommonObj(feature, uid, subFolderName);
+						const common = this.getCommonObj(feature, uid);
 
+						//DPs im Option-Ordner sollen nur lesbar sein, auch wenn sie access=readwrite haben. Beschreibbar sind sie unter den jeweiligen Programmen
+						if (subFolderName.toLowerCase() === "option") {
+							common.write = false;
+						}
 						if (subFolderName.toLowerCase() === "program") {
 							common.read = false;
 							common.write = true;
@@ -316,26 +343,30 @@ class CloudlessHomeconnect extends utils.Adapter {
 		});
 	}
 
-	getCommonObj(feature, uid, subFolderName) {
-		const role = subFolderName && subFolderName.toLowerCase() === "command" ? "button" : "state";
+	getCommonObj(feature, uid) {
 		const typeStr = feature.type ? feature.type : "string";
 		const common = {
 			name: uid.toString(),
 			type: typeStr,
-			role: role,
+			role: "text",
 			write: (feature.access && feature.access.toLowerCase().includes("write")) || false,
 			read: (feature.access && feature.access.toLowerCase().includes("read")) || true,
 		};
 
 		if (typeStr === "number") {
+			common.role = "level";
 			if (feature.unit) {
 				common.unit = feature.unit;
 			}
-			common.def = feature.default ? parseInt(feature.default) : 0;
-			common.min = common.def;
+			common.def = 0;
+			if (feature.default) {
+				common.def = parseInt(feature.default);
+			} else if (feature.initValue) {
+				common.def = parseInt(feature.initValue);
+			}
 			if (feature.min) {
 				common.min = parseInt(feature.min);
-				common.def = common.min;
+				common.def = common.def < common.min ? common.min : common.def;
 			}
 			if (feature.max) {
 				common.max = parseInt(feature.max);
@@ -345,7 +376,13 @@ class CloudlessHomeconnect extends utils.Adapter {
 				common.states = feature.states;
 			}
 		} else if (typeStr === "boolean") {
-			common.def = feature.default ? feature.default === "true" : false;
+			common.role = "switch";
+			common.def = false;
+			if (feature.default) {
+				common.def = feature.default === "true";
+			} else if (feature.initValue) {
+				common.def = feature.initValue === "true";
+			}
 		} else {
 			common.def = "";
 		}
@@ -365,22 +402,23 @@ class CloudlessHomeconnect extends utils.Adapter {
 				if (values.error) {
 					if (values.error === 400) {
 						this.log.debug(
-							"Unplausibler Wert wurde zuvor gesendet. Antwort des Gerätes: " +
+							"Implausible value was previously sent. Device response: " +
 								values.error +
-								" bei Service " +
+								" at service " +
 								values.resource,
 						);
 					} else if (values.error > 5000) {
 						this.log.debug(
-							"Unplausibler Wert wurde empfangen (" +
+							"Implausible value was received (" +
 								values.error +
 								"): " +
 								values.info +
-								" ; Wert: " +
+								" ; Value: " +
 								values.resource,
 						);
 					} else {
-						this.log.error("Kommunikationsfehler " + values.error + " bei Service " + values.resource);
+						const msg = "Communication error " + values.error + " at service " + values.resource;
+						this.config.communicationError ? this.log.debug(msg) : this.log.error(msg);
 					}
 					return;
 				}
@@ -389,8 +427,8 @@ class CloudlessHomeconnect extends utils.Adapter {
 				}
 			}
 		} catch (e) {
-			this.log.debug("Fehler beim Behandeln einer Nachricht von " + devId + ": " + msg);
-			this.log.debug("Fehlermeldung: " + e);
+			this.log.debug("Error handling a message from " + devId + ": " + msg);
+			this.log.debug("Error message: " + e);
 		}
 	}
 
@@ -401,10 +439,6 @@ class CloudlessHomeconnect extends utils.Adapter {
 				let value = typeof values[uid] === "object" ? JSON.stringify(values[uid]) : values[uid];
 
 				const oid = this.getDpByUid(device, uid);
-				//Optionen werden nicht aktualisiert
-				if (this.getSubfolderByDp(oid).toLowerCase() === "option" && device.features[uid].access !== "read") {
-					return;
-				}
 
 				//Objekt holen, um richtigen Typ zu ermitteln
 				const obj = await this.getObjectAsync(oid);
@@ -494,7 +528,7 @@ class CloudlessHomeconnect extends utils.Adapter {
 	closeConnections() {
 		this.devMap.forEach((device) => {
 			device.ws.close();
-			this.clearTimeout(device.refreshInterval);
+			this.clearInterval(device.refreshInterval);
 		});
 	}
 
@@ -542,14 +576,14 @@ class CloudlessHomeconnect extends utils.Adapter {
 	async onStateChange(oid, state) {
 		oid = oid.replaceAll(this.namespace + ".", "");
 		const systemAdapterId = "system.adapter." + this.namespace;
-		if (state && state.from !== systemAdapterId) {
+		if (state && !state.ack && state.from !== systemAdapterId) {
 			// The state was changed not by adapter itself
 			this.log.debug("state " + oid + " changed: " + state.val + " (ack = " + state.ack + ")");
 
 			//Wird DP info.config geleert, soll diese durch Neustart des Adapters neu geladen werden
 			if (oid === "info.config") {
 				if (typeof state.val === "string" && state.val.trim().length === 0) {
-					this.log.info("Adapter wird neu gestartet, um die Konfiguration zu aktualisieren.");
+					this.log.info("Adapter restarts to update configuration.");
 
 					this.closeConnections();
 					await util.sleep(2000); //Give sockets a little time to close connections
@@ -583,12 +617,12 @@ class CloudlessHomeconnect extends utils.Adapter {
 			if (oid.includes("observe") && state.val) {
 				this.connectDevice(devId);
 
-				this.log.info("Gerät mit ID " + devId + " kann über den Adapter gesteuert werden.");
+				this.log.info("Device with ID " + devId + " can be controlled via the adapter.");
 				return;
 			}
 
 			if (!this.devMap.has(devId)) {
-				this.log.error("Gerät " + devId + " nicht gefunden. Bitte Adapter neu starten und erneut versuchen.");
+				this.log.error("Device " + devId + " not found. Please restart adapter and try again.");
 				return;
 			}
 
@@ -608,7 +642,7 @@ class CloudlessHomeconnect extends utils.Adapter {
 					this.devMap.delete(devId);
 				}
 				this.setStateChanged("info.connection", { val: true, ack: true });
-				this.log.info("Gerät mit ID " + devId + " wird nicht mehr über den Adapter gesteuert.");
+				this.log.info("Device with ID " + devId + " is no longer controlled via the adapter.");
 				return;
 			}
 
@@ -631,7 +665,9 @@ class CloudlessHomeconnect extends utils.Adapter {
 					//Programme haben u.U. Optionen, die auch übertragen werden müssen
 					data.program = uid;
 
-					device.send("/ro/selectedProgram", 1, "POST", data);
+					if (device.isSendSelectedProgram) {
+						device.send("/ro/selectedProgram", 1, "POST", data);
+					}
 
 					const options = await this.getStatesAsync(oid.substring(0, oid.lastIndexOf(".")) + ".*");
 					data.options = await Promise.all(
@@ -646,8 +682,9 @@ class CloudlessHomeconnect extends utils.Adapter {
 								};
 							}),
 					);
-					//Bei Waschmaschine müssen die Optionen der Programme einzeln und nicht in Verbindung mit activeProgram gesetzt werden.
-					if (device.type === "Washer") {
+					//Bei manchen Geräten müssen die Optionen der Programme einzeln und nicht in Verbindung mit activeProgram gesetzt werden.
+					const isSendOptionsSeperately = await this.getStateAsync(devId + ".sendOptionsSeparately");
+					if (isSendOptionsSeperately && isSendOptionsSeperately.val) {
 						data.options.forEach((option) => {
 							device.send("/ro/values", 1, "POST", option);
 						});

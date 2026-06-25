@@ -1,72 +1,98 @@
 {
 	"common": {
 		"name": "cloudless-homeconnect",
-		"version": "1.2.9",
+		"version": "1.7.0",
 		"news": {
-			"1.2.9": {
-				"en": "Error by parsing programs",
-				"de": "Fehler beim Parsen von programs",
-				"ru": "Ошибка в разбивке по программам",
-				"pt": "Erro ao analisar programas",
-				"nl": "Fout bij het ontleden van programma's",
-				"fr": "Erreur en analysant les programmes",
-				"it": "Errore tramite programmi di parsing",
-				"es": "Error al analizar programas",
-				"pl": "Błąd poprzez parsowanie programów",
-				"uk": "Помилка за програмами",
-				"zh-cn": "分析程序出错"
+			"1.7.0": {
+				"en": "Don't ignore readwrite-options anymore (Issue #505)",
+				"de": "Optionen mit readwrite werden nicht mehr ignoriert (Issue #505)",
+				"ru": "Больше не игнорируйте параметры чтения/записи (Проблема #505)",
+				"pt": "Não ignore mais as opções de leitura e gravação (Problema nº 505)",
+				"nl": "Negeer de lees-schrijfopties niet langer (Probleem #505)",
+				"fr": "Ne négligez plus les options de lecture/écriture (Problème n° 505)",
+				"it": "Non ignorare più le opzioni di lettura/scrittura (Problema n. 505)",
+				"es": "Ya no ignores las opciones de lectura y escritura (Problema n.° 505)",
+				"pl": "Nie ignoruj już opcji odczytu i zapisu (problem nr 505)",
+				"uk": "Більше не ігноруйте опції readwrite (Проблема №505)",
+				"zh-cn": "不要再忽略读写选项（问题 #505）"
 			},
-			"1.2.8": {
-				"en": "Bugfix for reading program options",
-				"de": "Bugfix zum Lesen von Programmoptionen",
-				"ru": "Исправление для выбора программы чтения",
-				"pt": "Bugfix para opções de programas de leitura",
-				"nl": "Bugfix voor het lezen van programma-opties",
-				"fr": "Bugfix pour les options de programme de lecture",
-				"it": "Bugfix per le opzioni di lettura del programma",
-				"es": "Bugfix para leer opciones del programa",
-				"pl": "Bugfix do odczytu opcji programu",
-				"uk": "Виправлення помилок для читання програм",
-				"zh-cn": "读取程序选项时的错误fix"
+			"1.6.4": {
+				"en": "Dependency updates and required Admin-Version >= 7.6.20",
+				"de": "Abhängigkeitsaktualisierungen und erforderliche Admin-Version >= .6.20",
+				"ru": "Обновления зависимостей и требуемая админ-версия 7.6.20",
+				"pt": "Atualizações de dependência e necessidade de Admin-Version >= 7.6.20",
+				"nl": "Afhankelijkheidsupdates en vereiste Admin-Version 7.6.20",
+				"fr": "Mise à jour de la dépendance et besoin Admin-Version >= 7.6.20",
+				"it": "Aggiornamenti della dipendenza e richiesta 7.6.20",
+				"es": "Actualizaciones de dependencia y necesaria Admin-Version 7.6.20",
+				"pl": "Aktualizacje zależności i wymagana wersja administracyjna > = 7.6.20",
+				"uk": "Залежність оновлень та обов’язкові Admin-Version >= 7.6.20 р",
+				"zh-cn": "依赖性更新和需要的管理员 7.6.20 (中文(简体) )"
 			},
-			"1.2.7": {
-				"en": "Notes from adapter checker",
-				"de": "Hinweise von Adapter-Checker",
-				"ru": "Примечания к адаптеру",
-				"pt": "Notas do verificador do adaptador",
-				"nl": "Opmerkingen van adapterchecker",
-				"fr": "Notes de l'adaptateur checker",
-				"it": "Note dall'adattatore checker",
-				"es": "Notas del adaptador",
-				"pl": "Notatki z sprawdzania adaptera",
-				"uk": "Примітки з адаптера",
-				"zh-cn": "适配器检查器的注释"
+			"1.6.3": {
+				"en": "Try to replace access=none in some options (Issue #333)",
+				"de": "Versuche, access=none in einigen Optionen durch einen anderen Wert zu ersetzen (Issue #333)",
+				"ru": "Попробуйте заменить access=none в некоторых опциях (Issue #333)",
+				"pt": "Tente substituir access=none em algumas opções (Issue #333)",
+				"nl": "Probeer access=none te vervangen in sommige opties (Issue #333)",
+				"fr": "Essayez de remplacer access=none dans certaines options (Problème #333)",
+				"it": "Prova a sostituire access=none in alcune opzioni (Issue #333)",
+				"es": "Intenta reemplazar access=none en algunas opciones (Issue #333)",
+				"pl": "Spróbuj zamienić access=none na kilku opcjach (Issue #333)",
+				"uk": "Спробуйте замінити access=none на деяких параметрах (Проблема #333)",
+				"zh-cn": "尝试将某些选项中的access=none替换为其他值 (问题＃333)"
 			},
-			"1.2.6": {
-				"en": "Added translations",
-				"de": "Übersetzungen hinzugefügt",
-				"ru": "Добавленные переводы",
-				"pt": "Adicionadas traduções",
-				"nl": "Toegevoegde vertalingen",
-				"fr": "Traductions ajoutées",
-				"it": "Traduzioni aggiuntive",
-				"es": "Traducciones adicionales",
-				"pl": "Dodano tłumaczenia",
-				"uk": "Додано переклади",
-				"zh-cn": "添加翻译"
+			"1.6.2": {
+				"en": "Dependency updates and node-version >= 20",
+				"de": "Abhängigkeitsaktualisierungen und Node-Version >= 20",
+				"ru": "Обновления зависимостей и версия узла >= 20",
+				"pt": "Atualizações de dependência e node-versão >= 20",
+				"nl": "Description 20",
+				"fr": "Mises à jour sur la dépendance et la version des nœuds >= 20",
+				"it": "Aggiornamenti di dipendenza e nodo-versione >= 20",
+				"es": "Actualizaciones de dependencia y nodo-versión >= 20",
+				"pl": "Aktualizacje zależności i wersja node- > = 20",
+				"uk": "Залежність оновлення та налаштування вузлів >= 20 хв",
+				"zh-cn": "依赖性更新和节点转换 20 (简体中文)"
 			},
-			"1.2.5": {
-				"en": "No connection at first start",
-				"de": "Keine Verbindung beim ersten Start",
-				"ru": "Нет связи на первом этапе",
-				"pt": "Nenhuma conexão no início",
-				"nl": "Geen verbinding bij eerste start",
-				"fr": "Pas de connexion au début",
-				"it": "Nessun collegamento all'inizio",
-				"es": "No hay conexión al principio",
-				"pl": "Brak połączenia przy pierwszym starcie",
-				"uk": "Без підключення при першому запуску",
-				"zh-cn": "启动时没有连接"
+			"1.6.1": {
+				"en": "Possibility to log communication errors as debug (Issue #242)",
+				"de": "Möglichkeit, Kommunikationsfehler als Debug zu protokollieren (Issue #242)",
+				"ru": "Возможность регистрации ошибок связи в качестве отладки (выпуск #242)",
+				"pt": "Possibilidade de registrar erros de comunicação como debug (Issue #242)",
+				"nl": "Mogelijkheid om communicatiefouten te loggen als debug (Issue #242)",
+				"fr": "Possibilité d'enregistrer les erreurs de communication comme debug (Émission #242)",
+				"it": "Possibilità di registrare errori di comunicazione come debug (Issue #242)",
+				"es": "Posibilidad de registrar errores de comunicación como depuración (Isue #242)",
+				"pl": "Możliwość logowania błędów komunikacyjnych jako debug (wydanie # 242)",
+				"uk": "Можливість вводити помилки зв'язку як дебюг (Issue #242)",
+				"zh-cn": "有可能将通信错误记录为调试( 问题 # 242)"
+			},
+			"1.6.0": {
+				"en": "Datapoint to send program options seperately (Issue #208)",
+				"de": "Datapoint, um Programmoptionen seperat zu senden (Issue #208)",
+				"ru": "Datapoint для отправки опций программы отдельно (выпуск #208)",
+				"pt": "Datapoint para enviar opções de programa seperadamente (Issue #208)",
+				"nl": "Datapoint om programma-opties afzonderlijk te versturen (Issue #208)",
+				"fr": "Datapoint pour envoyer séparément les options du programme (Numéro #208)",
+				"it": "Datapoint per inviare seperately opzioni di programma (Issue #208)",
+				"es": "Datapoint to send program options seperately (Issue #208)",
+				"pl": "Datapoint do wysyłania opcji programu seperately (wydanie # 208)",
+				"uk": "Відправлення параметрів програми (Issue #208)",
+				"zh-cn": "自动发送程序选项的数据点( 问题 # 208)"
+			},
+			"1.5.0": {
+				"en": "Handling to start program for dishwasher S255HVX15E (Issue #201)",
+				"de": "Handhabung zum Startprogramm für Geschirrspüler S255HVX15E (Issue #201)",
+				"ru": "Обработка для запуска программы посудомоечной машины S255HVX15E (выпуск No201)",
+				"pt": "Manuseamento para iniciar o programa para máquina de lavar louça S255HVX15E (Issue #201)",
+				"nl": "Handling to start programma voor vaatwasser S255HVX15E (Issue #201)",
+				"fr": "Manipulation du programme de démarrage pour lave-vaisselle S255HVX15E (Numéro #201)",
+				"it": "Gestione per avviare il programma per lavastoviglie S255HVX15E (Issue #201)",
+				"es": "Manejo para iniciar el programa para lavavajillas S255HVX15E (Isue #201)",
+				"pl": "Obsługa programu do zmywarki S255HVX15E (wydanie # 201)",
+				"uk": "Інструкція по запуску програми для посудомийної машини S255HVX15E (Issue #201)",
+				"zh-cn": "处理启动洗碗机程序 S255HVX15E(问题201)"
 			}
 		},
 		"titleLang": {
@@ -118,16 +144,25 @@
 		},
 		"dependencies": [
 			{
-				"js-controller": ">=5.0.19"
+				"js-controller": ">=6.0.11"
 			}
 		],
+		"docs": {
+			"en": ["docs/en/README.md"],
+			"de": ["docs/de/README.md"]
+		},
 		"globalDependencies": [
 			{
-				"admin": ">=6.0.0"
+				"admin": ">=7.6.20"
 			}
 		]
 	},
-	"native": {},
+	"encryptedNative": ["password"],
+	"protectedNative": ["password"],
+	"native": {
+		"password": "",
+		"communicationError": false
+	},
 	"objects": [],
 	"instanceObjects": [
 		{
